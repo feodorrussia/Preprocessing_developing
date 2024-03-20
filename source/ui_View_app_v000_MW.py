@@ -62,6 +62,11 @@ class Ui_MainWindow(object):
 
         self.sc = MplCanvas(self.centralwidget, width=1, height=1, dpi=100)
         self.sc.setMinimumSize(QSize(0, 400))
+        sizePolicy1 = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.MinimumExpanding)
+        sizePolicy1.setHorizontalStretch(0)
+        sizePolicy1.setVerticalStretch(0)
+        sizePolicy1.setHeightForWidth(self.sc.sizePolicy().hasHeightForWidth())
+        self.sc.setSizePolicy(sizePolicy1)
         self.toolbar = NavigationToolbar(self.sc, self.centralwidget)
 
         self.verticalLayout_4.addWidget(self.toolbar)
