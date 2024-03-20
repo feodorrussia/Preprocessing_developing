@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from scipy import signal, interpolate
 from scipy.stats import skew
 
@@ -91,11 +92,12 @@ def lenght_preproc(preproc_fragments, rate,
     return np.array(result_fragments, dtype="object")
 
 
-def fft_butter_skewness_filtering(x_data, signal_data, rate=4):
+def fft_butter_skewness_filtering(x_data, signal_data, rate=4, log_df: pd.DataFrame = None):
     """
     :param x_data:  np.array(), main signal x_data
     :param signal_data: np.array(), main signal y_data
     :param rate: int, signal rate (4 / 10)
+    :param log_df: data frame for plotting app (testing)
     :return: [x_lists, y_lists], filtered fragments
     """
     # CONSTANTS
@@ -106,11 +108,17 @@ def fft_butter_skewness_filtering(x_data, signal_data, rate=4):
     MIN_LENGTH_MCS = 0.008
     MAX_LENGTH_MCS = 0.035
 
-    signal_data_d2 = np.diff(signal_data, n=2)
+    n_diff = 1
+    signal_data_d2 = np.diff(signal_data, n=n_diff)
+    if log_df is not None:
+        for i in range(1, 3):
+            log_df[f"ch11_{i}d"] = np.concatenate([np.diff(signal_data, n=i), [0]*i])
 
-    b, a = signal.butter(3, 0.4)
+    b, a = signal.butter(5, 0.1)
 
     signal_data_d2 = signal.filtfilt(b, a, signal_data_d2)
+    if log_df is not None:
+        log_df["ch11_b"] = np.concatenate([signal_data_d2, [0]*n_diff])
 
     # Просто выбираем в качестве аномалий то, что +- стандартное отклонение. В лоб, но может сработать
     m = signal_data_d2.mean()
