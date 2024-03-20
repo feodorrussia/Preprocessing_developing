@@ -15,7 +15,7 @@ def increase_lims(lim):
 
 
 class App(QtWidgets.QMainWindow, MW_Design.Ui_MainWindow):
-    def __init__(self, df: pd.DataFrame = None):
+    def __init__(self, df: pd.DataFrame = None, l_p: int = None, r_p: int = None):
         # Это здесь нужно для доступа к переменным, методам
         # и т.д. в файле MW_Design.py
         super().__init__()
@@ -37,19 +37,19 @@ class App(QtWidgets.QMainWindow, MW_Design.Ui_MainWindow):
         self.SIGNAL_LENGTH = self.db_np.shape[0]
         self.Y_LIM = [increase_lims(self.db_df[self.columns[1:]].min().min()),
                       increase_lims(self.db_df[self.columns[1:]].max().max())]
-        self.step = 101
+        self.step = 150
 
         self.spinBox.setMinimum(0)
         self.spinBox.setMaximum(self.SIGNAL_LENGTH)
         self.spinBox.setValue(self.step)
 
         self.left_spinBox.setMinimum(0)
-        self.left_spinBox.setMaximum(self.step)
-        self.left_spinBox.setValue(0)
+        self.left_spinBox.setMaximum(self.step if l_p is None else l_p)
+        self.left_spinBox.setValue(0 if l_p is None else l_p)
 
-        self.right_spinBox.setMinimum(0)
+        self.right_spinBox.setMinimum(0 if l_p is None else l_p)
         self.right_spinBox.setMaximum(self.SIGNAL_LENGTH)
-        self.right_spinBox.setValue(self.step)
+        self.right_spinBox.setValue(self.step if r_p is None else r_p)
 
         self.action("plot")
 
@@ -147,9 +147,19 @@ class App(QtWidgets.QMainWindow, MW_Design.Ui_MainWindow):
             print(f"----\nSuccessfully open file {self.filename.split('/')[-1]}")
 
 
-def main(df=None):
+def main(*args, **kwargs):
+    df = None
+    left_p = 0
+    right_p = 150
+    if "df" in kwargs.keys():
+        df = kwargs["df"]
+    if "left_p" in kwargs.keys():
+        left_p = kwargs["left_p"]
+    if "right_p" in kwargs.keys():
+        right_p = kwargs["right_p"]
+
     app = QtWidgets.QApplication(sys.argv)  # Новый экземпляр QApplication
-    window = App(df)  # Создаём объект класса App
+    window = App(df=df, l_p=left_p, r_p=right_p)  # Создаём объект класса App
     window.show()  # Показываем окно
     app.exec()
 

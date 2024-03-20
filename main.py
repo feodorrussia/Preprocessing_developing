@@ -64,4 +64,4 @@ print(f"#log: Количество найденных фрагментов: {len
 print("==========================================")
 
 # Run viewing app
-main(df)
+main(df=df, left_p=55000, right_p=55500)
