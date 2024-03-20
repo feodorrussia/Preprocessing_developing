@@ -6,6 +6,7 @@ venv
 AAAA.py
 AAAA.ipynb
 fil.dat
+img/
 
 # Layout files
 source/ui_View_app_v000_MW_default.py
