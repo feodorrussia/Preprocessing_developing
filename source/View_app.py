@@ -59,6 +59,8 @@ class App(QtWidgets.QMainWindow, MW_Design.Ui_MainWindow):
 
         self.spinBox.valueChanged.connect(lambda: self.action('step'))
 
+        self.point_checkBox.clicked.connect(lambda: self.action('plot'))
+
         self.left_spinBox.valueChanged.connect(lambda: self.action('length'))
         self.right_spinBox.valueChanged.connect(lambda: self.action('length'))
 
