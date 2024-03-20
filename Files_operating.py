@@ -14,7 +14,7 @@ def clear_space(line):
     return line
 
 
-def read_dataFile(file_path, path_to_proj):
+def read_dataFile(file_path, path_to_proj=""):
     with open(file_path, 'r') as f:
         lines = f.readlines()
 
