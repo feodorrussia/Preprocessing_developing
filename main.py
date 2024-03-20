@@ -2,30 +2,30 @@ import gc
 import os
 import time
 import numpy as np
+import pandas as pd
 
 from Files_operating import read_dataFile, save_results_toFiles
 from source.Signal_preprocessing import fft_butter_skewness_filtering, data_converting_CNN
+from source.View_app import main
 
-path_to_proj = input("Введите путь к запускаемому файлу (Plasma_processing/): ")
-path_to_csv = input("Введите путь к файлам с данными относительно запускаемого файла (data_csv/): ")
+path_to_proj = ""
+path_to_csv = "data/"
+path_file = "data/41649_fragment.csv"
 
-if not os.path.exists(path_to_csv):
-    os.mkdir(path_to_csv)
-
-file_name = input("Введите имя файла. Доступные файлы:\n" + "\n".join(
-    list(filter(lambda x: '.dat' in x or '.txt' in x, os.listdir(path_to_csv)))) + "\n----------\n")
-
-file_path = path_to_csv + file_name
-FILE_D_ID = file_name[:5]  # "00000"
+file_path = "data/41649_fragment.csv"
+FILE_D_ID = "41649"
 # log
-print(f"\n#log: Выбран файл {file_name} (FILE_ID: {FILE_D_ID})")
+print(f"\n#log: Выбран файл 41649_fragment (FILE_ID: {FILE_D_ID})")
 
 fragments_csv_name = file_path[:-4] + "_fragments.csv"
 
 start = time.time()
-data = read_dataFile(file_path, path_to_proj)
+data = pd.read_csv(path_file)
+
+# DataFrame for plotting
+df = data.copy()
 # log
-print(f"#log: Файл {file_name} считан успешно. Tooks - {round(time.time() - start, 2) * 1} s.")
+print(f"#log: Файл 41649_fragment считан успешно. Tooks - {round(time.time() - start, 2) * 1} s.")
 gc.collect()
 
 SIGNAL_RATE = float(input("\nВведите частоту дискретизации для данного сигнала (4 / 10): "))  # 4
@@ -56,11 +56,12 @@ print("\n#log: Канал считан успешно")
 # log
 print("\n#log: Начата предварительная обработка данных.")
 start = time.time()
-fragments = fft_butter_skewness_filtering(x, y)
+fragments = fft_butter_skewness_filtering(x, y, log_df=df)
 # log
 print(f"#log: Предварительная обработка и фильтрация выполнена успешно. Tooks - {round(time.time() - start, 2) * 1} s.")
 print("==========================================")
 print(f"#log: Количество найденных фрагментов: {len(fragments[0])}")
 print("==========================================")
 
-
+# Run viewing app
+main(df)
