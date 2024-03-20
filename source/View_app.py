@@ -106,7 +106,7 @@ class App(QtWidgets.QMainWindow, MW_Design.Ui_MainWindow):
 
         ax.set_title(f"Pu-pu-pu",
                      fontdict={'fontsize': 10}, loc="left")
-        ax.legend()
+        ax.legend(bbox_to_anchor=(1.005, 1), loc='upper left', borderaxespad=0.)
         ax.set_ylim(self.Y_LIM)
         x_min = np.array(self.db_df[self.columns[0]])[self.left_spinBox.value()]
         x_max = np.array(self.db_df[self.columns[0]])[self.right_spinBox.value()]
