@@ -1,7 +1,7 @@
 from PySide6.QtCore import (QCoreApplication, QMetaObject, QSize, Qt)
 from PySide6.QtGui import (QFont)
 from PySide6.QtWidgets import (QDoubleSpinBox, QSpinBox, QHBoxLayout, QLabel,
-                               QPushButton,
+                               QPushButton, QCheckBox,
                                QSizePolicy, QSpacerItem, QToolButton,
                                QVBoxLayout, QWidget, QGridLayout)
 
@@ -50,6 +50,13 @@ class Ui_MainWindow(object):
         self.label_5.setObjectName(u"label_5")
 
         self.horizontalLayout_3.addWidget(self.label_5)
+
+        self.point_checkBox = QCheckBox(self.centralwidget)
+        self.point_checkBox.setChecked(False)
+        self.point_checkBox.setText("Show points")
+        self.pushButton_3.setObjectName(u"point_checkBox")
+
+        self.horizontalLayout_3.addWidget(self.point_checkBox)
 
         self.verticalLayout_4.addLayout(self.horizontalLayout_3)
 
@@ -131,12 +138,12 @@ class Ui_MainWindow(object):
 
         self.verticalLayout.addWidget(self.label_3)
 
-        self.doubleSpinBox = QDoubleSpinBox(self.centralwidget)
-        self.doubleSpinBox.setObjectName(u"doubleSpinBox")
-        self.doubleSpinBox.setMinimumSize(QSize(70, 0))
-        self.doubleSpinBox.setAlignment(Qt.AlignRight | Qt.AlignTrailing | Qt.AlignVCenter)
+        self.left_spinBox = QSpinBox(self.centralwidget)
+        self.left_spinBox.setObjectName(u"doubleSpinBox")
+        self.left_spinBox.setMinimumSize(QSize(70, 0))
+        self.left_spinBox.setAlignment(Qt.AlignRight | Qt.AlignTrailing | Qt.AlignVCenter)
 
-        self.verticalLayout.addWidget(self.doubleSpinBox)
+        self.verticalLayout.addWidget(self.left_spinBox)
 
         self.horizontalLayout.addLayout(self.verticalLayout)
 
@@ -158,19 +165,19 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_2.addWidget(self.label_4)
 
-        self.doubleSpinBox_2 = QDoubleSpinBox(self.centralwidget)
-        self.doubleSpinBox_2.setObjectName(u"doubleSpinBox_2")
+        self.right_spinBox = QSpinBox(self.centralwidget)
+        self.right_spinBox.setObjectName(u"doubleSpinBox_2")
         sizePolicy3 = QSizePolicy(QSizePolicy.Ignored, QSizePolicy.Fixed)
         sizePolicy3.setHorizontalStretch(0)
         sizePolicy3.setVerticalStretch(0)
-        sizePolicy3.setHeightForWidth(self.doubleSpinBox_2.sizePolicy().hasHeightForWidth())
-        self.doubleSpinBox_2.setSizePolicy(sizePolicy3)
-        self.doubleSpinBox_2.setMinimumSize(QSize(70, 0))
-        self.doubleSpinBox_2.setMaximumSize(QSize(100, 16777215))
-        self.doubleSpinBox_2.setAlignment(Qt.AlignRight | Qt.AlignTrailing | Qt.AlignVCenter)
-        self.doubleSpinBox_2.setMaximum(99990000.000000000000000)
+        sizePolicy3.setHeightForWidth(self.right_spinBox.sizePolicy().hasHeightForWidth())
+        self.right_spinBox.setSizePolicy(sizePolicy3)
+        self.right_spinBox.setMinimumSize(QSize(70, 0))
+        self.right_spinBox.setMaximumSize(QSize(100, 16777215))
+        self.right_spinBox.setAlignment(Qt.AlignRight | Qt.AlignTrailing | Qt.AlignVCenter)
+        self.right_spinBox.setMaximum(99990000.000000000000000)
 
-        self.verticalLayout_2.addWidget(self.doubleSpinBox_2)
+        self.verticalLayout_2.addWidget(self.right_spinBox)
 
         self.horizontalLayout.addLayout(self.verticalLayout_2)
 
