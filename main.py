@@ -28,12 +28,12 @@ df = data.copy()
 print(f"#log: Файл 41649_fragment считан успешно. Tooks - {round(time.time() - start, 2) * 1} s.")
 gc.collect()
 
-SIGNAL_RATE = float(input("\nВведите частоту дискретизации для данного сигнала (4 / 10): "))  # 4
+SIGNAL_RATE = 10.0  # float(input("\nВведите частоту дискретизации для данного сигнала (4 / 10): "))  # 4
 signal_maxLength = 512
 
 # Предложение пользователю выбрать канал
 available_channels = [col for col in data.columns if col != "t" and str(data[col][0]) != 'nan']
-selected_channel = input("\nДоступные каналы: " + ', '.join(available_channels) + "\nВыберите канал: ")
+selected_channel = "ch11"  # input("\nДоступные каналы: " + ', '.join(available_channels) + "\nВыберите канал: ")
 
 # Проверка наличия выбранного канала в данных
 if selected_channel in available_channels:
