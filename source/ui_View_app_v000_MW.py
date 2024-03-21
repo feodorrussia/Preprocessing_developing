@@ -54,9 +54,16 @@ class Ui_MainWindow(object):
         self.point_checkBox = QCheckBox(self.centralwidget)
         self.point_checkBox.setChecked(False)
         self.point_checkBox.setText("Show points")
-        self.pushButton_3.setObjectName(u"point_checkBox")
+        self.point_checkBox.setObjectName(u"point_checkBox")
 
         self.horizontalLayout_3.addWidget(self.point_checkBox)
+
+        self.fft_checkBox = QCheckBox(self.centralwidget)
+        self.fft_checkBox.setChecked(False)
+        self.fft_checkBox.setText("Show FFT")
+        self.fft_checkBox.setObjectName(u"fft_checkBox")
+
+        self.horizontalLayout_3.addWidget(self.fft_checkBox)
 
         self.verticalLayout_4.addLayout(self.horizontalLayout_3)
 
@@ -138,6 +145,7 @@ class Ui_MainWindow(object):
         self.verticalLayout = QVBoxLayout()
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.label_3 = QLabel(self.centralwidget)
+
         self.label_3.setObjectName(u"label_3")
         self.label_3.setAlignment(Qt.AlignCenter)
 
