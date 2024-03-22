@@ -23,7 +23,7 @@ start = time.time()
 data = pd.read_csv(path_file)
 
 # DataFrame for plotting
-df = data.copy()
+df = data.copy()  # .drop("ch12", axis=1)
 # log
 print(f"#log: Файл 41649_fragment считан успешно. Tooks - {round(time.time() - start, 2) * 1} s.")
 gc.collect()
@@ -64,4 +64,4 @@ print(f"#log: Количество найденных фрагментов: {len
 print("==========================================")
 
 # Run viewing app
-main(df=df, left_p=55000, right_p=55500)
+main(df=df, left_p=55170, right_p=55330)  # 58460 58660

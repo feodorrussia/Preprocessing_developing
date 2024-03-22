@@ -56,6 +56,53 @@ def shred_param_calc(frag_points, shred_points, COVER_PERCENT=0.7):
     return cut_num, cut_offset
 
 
+def count_fft_max(arr: np.array, arr2: np.array = None):
+    f_increase = False
+    max_count = 0
+    max_v = 0
+    maximums = []
+
+    for i in range(1, arr.shape[0]):
+        if not f_increase and arr[i - 1] < arr[i]:
+            f_increase = True
+            max_v = arr[i]
+            # print(arr[i - 1], arr[i])
+        if f_increase:
+            max_v = max(arr[i], max_v)
+            if arr[i - 1] > arr[i] and abs(max_v - arr[i]) / max_v > 0.3:
+                f_increase = False
+                # print(max_v, arr[i], abs(max_v - arr[i]) / max_v, "\n")
+                maximums.append(max_v)
+                max_count += 1
+    if len(maximums) > 0:
+        if arr2 is not None:
+            max_max_freq = arr2[arr == max(maximums)][0]
+        else:
+            max_max_freq = -1.0
+        if len(maximums) > 1:
+            maximums = np.array(maximums)
+            mean_max_ratio = (maximums[maximums != maximums.max()] / maximums.max()).max()
+        else:
+            mean_max_ratio = 0.0
+    else:
+        return [0.0, 0.0, -1.0]
+
+    return [max_count, mean_max_ratio, max_max_freq]
+
+
+def down_to_zero(x, edge=0.05):
+    return x if x > edge else 0.0
+
+
+def periods_count(fragment):
+    k = 0
+    mean = np.mean(fragment)
+    for j in range(len(fragment) - 1):
+        if (fragment[j] - mean) * (fragment[j + 1] - mean) < 0:
+            k += 1
+    return k
+
+
 def lenght_preproc(preproc_fragments, rate,
                    MIN_LENGTH_MCS=0.008,
                    MAX_LENGTH_MCS=0.03,
@@ -75,7 +122,7 @@ def lenght_preproc(preproc_fragments, rate,
         frag_len = length_frag(len(fragment), rate)
         if MAX_LENGTH_MCS >= frag_len >= MIN_LENGTH_MCS:
             result_fragments.append(np.array(fragment))
-        elif MAX_LENGTH_MCS <= frag_len * 1.5:
+        elif MAX_LENGTH_MCS <= frag_len:  # * 1.5
             n_cuts, cut_step = shred_param_calc(len(fragment), points_frag(SHRED_LENGTH_MCS, rate))
             # print(n_cuts, cut_step, points_frag(SHRED_LENGTH_MCS, rate), len(fragment), n_cuts * cut_step,
             #       n_cuts * points_frag(SHRED_LENGTH_MCS, rate),
@@ -92,9 +139,9 @@ def lenght_preproc(preproc_fragments, rate,
     return np.array(result_fragments, dtype="object")
 
 
-def fft_butter_skewness_filtering(x_data, signal_data, rate=4, log_df: pd.DataFrame = None):
+def fft_butter_skewness_filtering(t_data, signal_data, rate=4, log_df: pd.DataFrame = None):
     """
-    :param x_data:  np.array(), main signal x_data
+    :param t_data:  np.array(), main signal t_data
     :param signal_data: np.array(), main signal y_data
     :param rate: int, signal rate (4 / 10)
     :param log_df: data frame for plotting app (testing)
@@ -102,75 +149,108 @@ def fft_butter_skewness_filtering(x_data, signal_data, rate=4, log_df: pd.DataFr
     """
     # CONSTANTS
     TOLERANCE = 1  # Чем выше, тем больше шанс получить два филамента на одной картинке
-    MIN_PERIODS = 4  # В среднем количество колебаний на графике, начальный порог
-    SINUSOIDALITY = 0.7  # Абсолютная асимметрия
-    BOARDERS_PERCENT = 0.5  # Сколько процентов длины добавляем слева и справа от филамента.
+    MIN_PERIODS = 3  # В среднем количество колебаний на графике, начальный порог
+    MAX_FFT_MAX = 10  #
+    MAX_SKEWNESS = 0.4  # Абсолютная асимметрия
+    MAX_RATIO_FFT = 0.5
+    BOARDERS_PERCENT = 0.3  # Сколько процентов длины добавляем слева и справа от филамента.
     MIN_LENGTH_MCS = 0.008
+    REGION_LENGTH_MCS = 0.015
     MAX_LENGTH_MCS = 0.035
 
+    region = (int(REGION_LENGTH_MCS * rate * 1000) + 1) // 2  # получаем количество точек для рассматриваемого "окна"
+
     n_diff = 1
-    signal_data_d2 = np.diff(signal_data, n=n_diff)
-    if log_df is not None:
-        for i in range(1, 3):
-            log_df[f"ch11_{i}d"] = np.concatenate([np.diff(signal_data, n=i), [0]*i])
+    signal_data_d1 = np.diff(signal_data, n=n_diff)
+    # if log_df is not None:
+    #     log_df[f"ch11_{n_diff}d"] = np.concatenate([np.diff(signal_data, n=n_diff), [0]*n_diff])
 
     b, a = signal.butter(5, 0.1)
 
-    signal_data_d2 = signal.filtfilt(b, a, signal_data_d2)
+    signal_data_d1 = signal.filtfilt(b, a, signal_data_d1)
     if log_df is not None:
-        log_df["ch11_b"] = np.concatenate([signal_data_d2, [0]*n_diff])
+        log_df["ch11_b"] = np.concatenate([signal_data_d1, [0] * n_diff])
 
-    # Просто выбираем в качестве аномалий то, что +- стандартное отклонение. В лоб, но может сработать
-    m = signal_data_d2.mean()
-    std = signal_data_d2.std()
+    max_fft_counts = []
+    max_ratios_fft = []
+    max_frs_fft = []
+    std_cross_counts = []
+    period_counts = []
+    skewnesses = []
 
-    # преобразование Фурье и получение массива частот
-    fft = np.fft.fft(signal_data_d2)
-    frequency = np.abs(np.fft.fftfreq(len(signal_data_d2)))
+    preprocessed_ind_data = [[]]
+    signal_data_f = np.zeros(signal_data.shape[0])
+    f_fragment = False
 
-    region = 3
+    search_step = region // 2
+    point = region
+    while point < signal_data.shape[0] - region - n_diff:
+        # Выбираем в качестве аномалий то, что +- стандартное отклонение. В лоб, но может сработать
+        fragment = signal_data_d1[point - region:point + region]
 
-    y_d2_logic = np.zeros(len(signal_data_d2))
+        periods = periods_count(fragment)
 
-    for i in range(3, len(y_d2_logic) - 3):
-        condition = False
-        for k in range(-region, region + 1):
-            condition = condition or ((signal_data_d2[i + k] > m + std) or (signal_data_d2[i + k] < m - std)) \
-                        and frequency[i] > 0.03
-        if condition:
-            y_d2_logic[i] = True
+        fft = np.fft.fft(fragment)
+        fft_v = fft.real ** 2 + fft.imag ** 2
+        filter_values = np.vectorize(lambda x: down_to_zero(x, edge=fft_v.max() * 0.05))
+        fft_v_filter = filter_values(fft_v)
 
-    signal_data_f = np.array([signal_data[i] if y_d2_logic[i] else 0 for i in range(len(y_d2_logic))])
+        frequency = np.unique(np.abs(np.fft.fftfreq(fragment.shape[0])))
+        frequency = frequency[(frequency >= 0.0) & (frequency <= 0.1)]
+        fft_v_filter = fft_v_filter[:frequency.shape[0]]
 
-    preprocessed = ";".join(map(str, signal_data_f)).split("0.0;" * TOLERANCE)
-    preprocessed = [i.split(";") for i in preprocessed if len(i) > 1]
-    for i in range(len(preprocessed)):
-        # print(preprocessed[i] if "-" in preprocessed[i] else "", end="")
-        preprocessed[i] = [float(j) for j in preprocessed[i] if j != "" and j != "-"]
+        max_fft, max_ratio_fft, fr_max_fft = count_fft_max(fft_v_filter, frequency)
 
-    filtered_data = lenght_preproc(preprocessed, rate)
+        abs_skewness = np.abs(skew(fragment))
 
+        if 0 < max_fft <= MAX_FFT_MAX and periods >= MIN_PERIODS and max_ratio_fft < MAX_RATIO_FFT and abs_skewness < MAX_SKEWNESS:
+            f_fragment = True
+
+            preprocessed_ind_data[-1].append(point)
+            signal_data_f[point] = 0.1
+            search_step = 1
+
+            max_fft_counts.append(max_fft)
+            max_ratios_fft.append(max_ratio_fft)
+            max_frs_fft.append(fr_max_fft)
+            period_counts.append(periods)
+            skewnesses.append(abs_skewness)
+        else:
+            search_step = region // 2
+
+            if f_fragment:
+                preprocessed_ind_data.append([])
+            f_fragment = False
+
+        point += search_step
+
+    if log_df is not None:
+        log_df["ch11_f"] = signal_data_f
+
+    stats_df = pd.DataFrame(np.column_stack([np.array(max_fft_counts), np.array(max_ratios_fft),
+                                             np.array(max_frs_fft), np.array(period_counts), np.array(skewnesses)]),
+                            columns=["Max_fft_count", "Max_ratio_fft", "Max_fr_ftt", "Period_count", "Skewness"])
+    # print()  #
+    stats_df.groupby(["Max_fft_count", "Period_count"]).agg(["count", "mean"]).to_csv('data/stats.csv')
+
+    preprocessed_ind_data = lenght_preproc(preprocessed_ind_data, rate, SHRED_LENGTH_MCS=REGION_LENGTH_MCS)
     fragments = [[], []]
+    signal_data_f = np.zeros(signal_data.shape[0])
 
-    for i in range(len(filtered_data)):
-        y_ = filtered_data[i]
+    for i in range(len(preprocessed_ind_data)):
+        fragment_ind = preprocessed_ind_data[i]
+        fragment_len = fragment_ind.shape[0]
 
-        k = 0
-        mean = np.mean(y_)
-        for j in range(len(y_) - 1):
-            if (y_[j] - mean) * (y_[j + 1] - mean) < 0:
-                k += 1
+        l_edge = max(fragment_ind[0] - int(BOARDERS_PERCENT * fragment_len), 0)
+        r_edge = min(fragment_ind[fragment_len - 1] + int(BOARDERS_PERCENT * fragment_len), t_data.shape[0] - 1)
 
-        abs_skewness = np.abs(skew(y_))
+        fragments[0].append(t_data[l_edge:r_edge + 1])
+        fragments[1].append(signal_data[l_edge:r_edge + 1])
 
-        if k > MIN_PERIODS * 2 and abs_skewness < SINUSOIDALITY:
-            r = x_in_y(filtered_data[i][:5].tolist(), signal_data.tolist())
-            x_id = np.array(
-                list(range(r - int(BOARDERS_PERCENT * filtered_data[i].shape[0]),
-                           r + int((BOARDERS_PERCENT + 1) * filtered_data[i].shape[0]))))
+        signal_data_f[l_edge:r_edge + 1] = 0.2
 
-            fragments[0].append(x_data[x_id])
-            fragments[1].append(signal_data[x_id])
+    if log_df is not None:
+        log_df["ch11_f_fin"] = signal_data_f
 
     return fragments
 
